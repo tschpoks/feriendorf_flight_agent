@@ -4,9 +4,10 @@
 Start:  python3 server.py   ->  http://localhost:8787
 Der API-Key (Ignav) steht in .env:  IGNAV_API_KEY=...
 """
-import base64
 import hmac
 import http.cookiejar
+import http.cookies
+import hashlib
 import json
 import re
 import threading
@@ -32,6 +33,16 @@ HOST = os.environ.get("HOST", "127.0.0.1")  # für Hosting: HOST=0.0.0.0
 #   DAILY_API_LIMIT    maximale Ignav-Abfragen pro 24 h über alle Nutzer (Schutz des Kontingents)
 #   SEARCHES_PER_HOUR  maximale Suchen je Besucher (IP) und Stunde
 #   TRUST_PROXY=1      Besucher-IP aus X-Forwarded-For lesen (hinter Hosting-Proxy)
+LOGIN_PAGE = """<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feriendorf Flight Agent</title><style>
+:root{color-scheme:light dark}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font:16px system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#14181f}
+@media(prefers-color-scheme:dark){body{background:#0e1014;color:#eceff4}form{background:#171a21!important;border-color:#272c36!important}input{background:#0e1014!important;color:#eceff4!important;border-color:#272c36!important}}
+form{width:min(340px,calc(100% - 32px));background:#fff;border:1px solid #e1e5ea;border-radius:14px;padding:22px}h1{font-size:19px;margin:0 0 4px}p{margin:0 0 14px;color:#667085;font-size:14px}
+input{width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #e1e5ea;border-radius:10px;margin-bottom:12px}button{width:100%;padding:12px;font-size:16px;font-weight:700;border:0;border-radius:10px;background:#ff690f;color:#fff;cursor:pointer}.e{color:#b42318!important;margin:0 0 10px}
+</style></head><body><form method="post" action="/login"><h1>&#9992; Feriendorf Flight Agent</h1><p>Bitte Passwort eingeben.</p>{{ERR}}
+<input type="password" name="code" placeholder="Passwort" autofocus required autocomplete="current-password"><button type="submit">&Ouml;ffnen</button></form></body></html>"""
+
+
 def public_mode():
     return env_var("PUBLIC_MODE") == "1"
 
@@ -44,6 +55,7 @@ def int_env(name, default=0):
 
 
 _rate = {}
+_login_tries = {}
 
 STAR_ALLIANCE = ["A3", "AC", "CA", "AI", "NZ", "NH", "OZ", "OS", "AV", "SN", "CM", "OU", "MS",
                  "ET", "BR", "LO", "LH", "SK", "ZH", "SQ", "SA", "LX", "TP", "TG", "TK", "UA"]
@@ -318,24 +330,59 @@ class Handler(BaseHTTPRequestHandler):
                 return fwd.split(",")[0].strip()
         return self.client_address[0]
 
+    def session_token(self):
+        code = env_var("ACCESS_CODE").encode()
+        return hmac.new(code, b"feriendorf-flight-agent-session", hashlib.sha256).hexdigest()
+
     def gate(self):
-        """Zugangscode per HTTP-Basic-Auth (Benutzername egal). Ohne ACCESS_CODE ist die Seite offen."""
-        code = env_var("ACCESS_CODE")
-        if not code:
+        """Zugangscode: Besucher geben nur ein Passwort ein, danach merkt sich ein Cookie die Anmeldung (30 Tage).
+        Ohne ACCESS_CODE ist die Seite offen."""
+        if not env_var("ACCESS_CODE"):
             return True
         try:
-            given = base64.b64decode(self.headers.get("Authorization", "")[6:]).decode().split(":", 1)[1]
+            ck = http.cookies.SimpleCookie(self.headers.get("Cookie", ""))
+            if "fa_session" in ck and hmac.compare_digest(ck["fa_session"].value, self.session_token()):
+                return True
         except Exception:  # noqa: BLE001
-            given = ""
-        if hmac.compare_digest(given.encode(), code.encode()):
-            return True
-        self.send_response(401)
-        self.send_header("WWW-Authenticate", 'Basic realm="Feriendorf Flight Agent"')
-        self.send_header("Content-Length", "0")
-        self.end_headers()
+            pass
+        path = urllib.parse.urlparse(self.path).path
+        if self.command == "GET" and path in ("/", "/index.html"):
+            self.send_login_page()
+        else:
+            self.send_json({"error": "login required"}, 401)
         return False
 
+    def send_login_page(self, error=False, code=200):
+        page = LOGIN_PAGE.replace("{{ERR}}", "<p class=e>Falsches Passwort.</p>" if error else "").encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(page)))
+        self.end_headers()
+        self.wfile.write(page)
+
+    def do_login(self):
+        ip, now = self.client_ip(), time.time()
+        hist = [t for t in _login_tries.get(ip, []) if now - t < 600]
+        if len(hist) >= 10:  # Schutz vor Raten: 10 Versuche je 10 Minuten
+            return self.send_login_page(True, 429)
+        n = int(self.headers.get("Content-Length", 0))
+        form = urllib.parse.parse_qs(self.rfile.read(min(n, 2000)).decode(errors="ignore"))
+        given = (form.get("code", [""])[0]).encode()
+        if hmac.compare_digest(given, env_var("ACCESS_CODE").encode()):
+            secure = "; Secure" if self.headers.get("X-Forwarded-Proto", "") == "https" else ""
+            self.send_response(303)
+            self.send_header("Set-Cookie", "fa_session=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax%s"
+                             % (self.session_token(), 30 * 86400, secure))
+            self.send_header("Location", "/")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+        else:
+            _login_tries[ip] = hist + [now]
+            self.send_login_page(True, 401)
+
     def do_POST(self):
+        if self.path == "/login" and env_var("ACCESS_CODE"):
+            return self.do_login()
         if not self.gate():
             return
         u = urllib.parse.urlparse(self.path)
