@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feriendorf Flight Agent</title>
+<style>
+:root{--bg:#f2f4f7;--card:#fff;--ink:#14181f;--mute:#667085;--line:#e1e5ea;--acc:#ff690f;--accink:#fff;--blue:#1d4ed8;--good:#0f7a3d;--goodbg:#e8f6ee;--warn:#9a5b00;--warnbg:#fff4e0;--bad:#b42318;--ml:86%}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1014;--card:#171a21;--ink:#eceff4;--mute:#9aa3b2;--line:#272c36;--acc:#ff7a2b;--blue:#6b9bff;--good:#4ade80;--goodbg:#10261a;--warn:#fbbf24;--warnbg:#2a2210;--bad:#f87171;--ml:24%}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 60px}
+header{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}h1{font-size:20px;margin:0}.sub{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.search{display:grid;grid-template-columns:minmax(110px,1fr) auto minmax(110px,1fr) minmax(130px,1.1fr) auto minmax(70px,.5fr) auto;gap:10px;align-items:end}
+@media(max-width:900px){.search{grid-template-columns:1fr 1fr}}
+label{display:block;font-size:11px;color:var(--mute);margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input:disabled{opacity:.8}
+button{border:0;border-radius:8px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer;background:var(--acc);color:var(--accink)}
+button.sec{background:transparent;color:var(--blue);border:1px solid var(--line)}button:disabled{opacity:.5;cursor:default}
+.more{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;align-items:center;font-size:13px}
+.more label{display:inline-flex;gap:6px;align-items:center;margin:0;text-transform:none;font-size:13px;color:var(--ink);letter-spacing:0}.more input,.more select{width:auto}
+.dur{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-right:6px}.durl{font-weight:700;min-width:215px}.durl b{color:var(--acc);margin-left:4px;white-space:nowrap}
+.rng{position:relative;width:200px;height:26px;margin:0 10px;touch-action:none;cursor:pointer}.rth{position:absolute;top:3px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:var(--acc);border:3px solid var(--card);box-shadow:0 0 0 1px var(--acc);cursor:grab;touch-action:none;z-index:3}.rth.grab{cursor:grabbing;box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 35%,transparent)}.rth:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.rtrack{position:absolute;left:-10px;right:-10px;top:10px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--mute) 35%,transparent)}.rfill{position:absolute;top:10px;height:6px;border-radius:3px;background:var(--acc)}
+.more .rng input{position:absolute;left:0;top:0;width:100%;height:26px;margin:0;padding:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;border:0}
+.rng input::-webkit-slider-runnable-track{background:transparent;height:26px}.rng input::-moz-range-track{background:transparent}
+.rng input::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;width:20px;height:20px;margin-top:3px;border-radius:50%;background:var(--acc);border:3px solid var(--card);box-shadow:0 0 0 1px var(--acc);cursor:grab}
+.rng input::-moz-range-thumb{pointer-events:auto;width:14px;height:14px;border-radius:50%;background:var(--acc);border:3px solid var(--card);box-shadow:0 0 0 1px var(--acc);cursor:grab}
+.presets{display:flex;gap:5px;flex-wrap:wrap}.chip.pr{height:30px;font-size:12px;padding:0 9px}.chip.pr.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);color:var(--acc)}
+.trip{display:flex;gap:6px;margin-bottom:10px}.chip.tp{height:32px;font-size:13px}.chip.tp:has(input:checked){border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);color:var(--acc)}.chip.tp input{width:auto}
+.swap{height:39px;width:42px;padding:0;font-size:18px;color:var(--blue)}
+.flexc{display:flex;gap:6px;align-items:stretch}.chip{display:inline-flex;align-items:center;gap:5px;margin:0;padding:0 11px;height:39px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;white-space:nowrap}.chip input{width:auto;padding:0;margin:0}.chip:has(input:checked){border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.flex{display:flex;flex-wrap:nowrap;white-space:nowrap;gap:8px;align-items:center;margin-top:5px}.flex label{display:inline-flex;gap:4px;align-items:center;margin:0;text-transform:none;font-size:12px;color:var(--ink);letter-spacing:0}.flex input{width:auto;padding:0}
+.bar{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:12px}.bar i{display:block;height:100%;background:var(--acc);width:0;transition:width .3s}
+.note{font-size:12px;color:var(--mute)}.err{color:var(--bad)}
+.layout{display:grid;grid-template-columns:240px 1fr;gap:16px;margin-top:16px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.side{position:sticky;top:12px}.side h3{font-size:12px;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}.side h3:first-child,.side div+h3{margin-top:0}
+.side{max-height:calc(100vh - 24px);overflow:auto;padding:12px 14px}
+.fh{display:flex;align-items:center;gap:8px;margin-bottom:6px}.fh b{font-size:15px}.fh .note{flex:1}.fh button{padding:4px 10px;font-size:12px}
+#usage a,.al-act a,#ilog a{color:var(--blue)}
+dialog#ilog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:18px;max-width:420px;width:calc(100% - 32px)}dialog#ilog::backdrop{background:rgba(0,0,0,.5)}
+#ilog label{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}#ilog input{margin-top:3px}.row2{display:flex;gap:8px;margin-top:12px}.al-act{display:flex;gap:8px;font-size:12px;margin:0 0 4px;color:var(--mute)}.al-act a{text-decoration:none;font-weight:600}.al-act a:hover{text-decoration:underline}
+.fg{border-top:1px solid var(--line)}.fg:first-of-type{border-top:0}
+.fg summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:10px 0}
+.fg summary::-webkit-details-marker{display:none}.fg summary:after{content:"▾";margin-left:auto;color:var(--mute);font-size:12px}.fg[open] summary:after{content:"▴"}
+.bd{font-size:11px;font-weight:700;color:var(--accink);background:var(--acc);border-radius:99px;padding:0 7px;line-height:17px}.bd:empty{display:none}
+.fg[open]{padding-bottom:8px}
+.frow{display:grid;grid-template-columns:72px 1fr;align-items:center;gap:8px;margin:6px 0}.frow>label{margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
+.frow.t{grid-template-columns:58px 1fr}.frow.t select{width:58px;flex:none;padding:6px 4px}
+.fc{display:flex;align-items:center;gap:6px;min-width:0}.fc input,.fc select{padding:6px 8px;font-size:13px;min-width:0;width:100%}.unit{color:var(--mute);font-size:13px}
+.hint{font-size:12px;color:var(--mute);margin:6px 0 0}.sub{font-size:13px;font-weight:600;margin:12px 0 4px}
+.fi{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;font-size:14px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;color:var(--ink)}.fi span:first-child{display:flex;gap:8px;align-items:center}.fi input{width:auto}
+.f2{display:flex;gap:6px;align-items:center}.f2 input,.f2 select{padding:6px 8px;font-size:13px;min-width:0}.f2 input{width:90px}.f2 select{flex:1}
+.fi em{font-style:normal;color:var(--mute);font-size:12px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card);margin-bottom:12px}
+.tab{padding:10px 12px;cursor:pointer;text-align:left;background:var(--card);border:0;border-radius:0;color:var(--ink);font-weight:700}
+.tab+.tab{border-left:1px solid var(--line)}.tab small{display:block;font-weight:500;color:var(--mute);font-size:12px}
+.tab.on{box-shadow:inset 0 -3px 0 var(--acc)}
+.res{display:grid;grid-template-columns:1fr 180px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+@media(max-width:700px){.res{grid-template-columns:1fr}}
+.legs{padding:8px 14px 0}
+.legh{font-size:11px;color:var(--mute);margin:6px 0 0;text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center}
+.dtb{background:transparent;border:1px solid var(--line);color:var(--blue);padding:2px 9px;font-size:11px;font-weight:600;text-transform:none;letter-spacing:0;border-radius:6px}
+.det{margin:2px 0 8px 102px;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;font-size:13px}.det[hidden]{display:none}
+.seg{display:grid;grid-template-columns:20px 1fr;gap:8px}.seg .rail{position:relative}.seg .rail:before{content:"";position:absolute;left:8px;top:6px;bottom:-6px;width:2px;background:var(--line)}.seg:last-child .rail:before{display:none}
+.seg .rail i{position:absolute;left:4px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid var(--bg)}
+.seg .body{padding-bottom:10px}.seg .hd{font-weight:700}.seg .sub2{font-size:12px;color:var(--mute)}
+.lay2{margin:0 0 10px 28px;padding:6px 10px;border-radius:8px;background:var(--card);border:1px dashed var(--line);font-size:12px}.lay2.w{background:var(--warnbg);border-color:var(--warn);color:var(--warn)}
+@media(max-width:700px){.det{margin-left:0}}
+.leg{display:grid;grid-template-columns:92px 1fr;gap:10px;padding:8px 0 4px;align-items:center}
+.legblock+.legblock{border-top:1px dashed var(--line);margin-top:6px}
+.logos{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap}.logo{width:28px;height:28px;border-radius:6px;object-fit:contain;background:#fff;border:1px solid var(--line);padding:2px}.logo.fb{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#555}
+.al{font-size:11px;color:var(--mute);line-height:1.2}.al b{display:block;font-size:13px;color:var(--ink)}
+.apc{color:var(--ink);cursor:help;border-bottom:1px dotted var(--mute)}.apcity{display:block;max-width:118px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.r .apcity{margin-left:auto}
+.fl{display:grid;grid-template-columns:118px 1fr 118px;gap:8px;align-items:center}
+.t{font-size:20px;font-weight:700;line-height:1.1}.t small{font-size:11px;color:var(--bad);font-weight:700;vertical-align:super;margin-left:2px}
+.ap{font-size:12px;color:var(--mute)}.r{text-align:right}
+.mid{text-align:center;font-size:12px;color:var(--mute)}
+.line{position:relative;height:2px;background:var(--line);margin:9px 6px;border-radius:2px}
+.line:before,.line:after{content:"";position:absolute;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--card);border:2px solid var(--mute)}.line:before{left:-6px}.line:after{right:-6px}
+.line i{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid var(--card);transform:translateX(-50%)}
+.stops{display:flex;flex-wrap:wrap;gap:2px 10px;justify-content:center;font-size:12px}
+.stops b{color:var(--ink)}.stops .w{color:var(--warn)}
+.nonstop{color:var(--good);font-weight:700}
+.fn{font-size:11px;color:var(--mute);margin:0 0 6px 102px}
+.buy{border-left:1px solid var(--line);padding:14px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:var(--bg)}
+@media(max-width:700px){.buy{border-left:0;border-top:1px solid var(--line)}}
+.price{font-size:26px;font-weight:800}.price small{display:block;font-size:11px;color:var(--mute);font-weight:500}
+.tags{display:flex;flex-wrap:wrap;gap:5px;padding:4px 14px 12px}
+.tag{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--bg);border:1px solid var(--line);color:var(--mute)}
+.tag.good{color:var(--good);border-color:var(--good)}.tag.warn{color:var(--warn);background:var(--warnbg);border-color:var(--warn)}
+a.book{display:block;text-align:center;padding:9px 10px;border-radius:8px;background:var(--acc);color:var(--accink);text-decoration:none;font-weight:700;font-size:13px;margin-bottom:4px}
+.empty{padding:30px;text-align:center;color:var(--mute)}
+details{margin-top:14px}summary{cursor:pointer;font-weight:700;padding:6px 0}
+.mxcard{margin-bottom:14px;padding:16px}.mxcard.col .mx,.mxcard.col .mxh .note,.mxcard.col .mxinfo{display:none}.mxcard.col .mxh{margin-bottom:0}.mxh{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.mxh h2{margin:0 0 2px;font-size:17px}
+.mx{overflow:auto;padding-bottom:4px}.mxg{display:grid;gap:6px;min-width:max-content}
+.mh{background:var(--bg);border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:6px 4px;font-size:12px;font-weight:600;line-height:1.25;cursor:pointer}.mh:hover{border-color:var(--blue);color:var(--ink)}.mh.on{border-color:var(--acc);color:var(--ink);box-shadow:inset 0 0 0 1px var(--acc)}
+.mh.corner{cursor:default;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.03em}.mh.corner:hover{border-color:var(--line);color:var(--mute)}
+.tile{height:62px;min-width:74px;border:2px solid transparent;border-radius:10px;color:#111;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
+.tile b{font-size:18px;line-height:1.1}.tile small{font-size:10px;opacity:.75}
+.tile:hover{border-color:var(--blue)}.tile.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}.tile.dim{opacity:.4}.tile.best b:after{content:" ★";font-size:12px}
+.tile.empty{background:transparent;border:1px dashed var(--line);cursor:default;color:var(--mute);opacity:1}
+.mxinfo{font-size:12px;color:var(--mute);margin-top:10px}
+table{border-collapse:collapse;font-size:12px}th,td{padding:4px 8px;border:1px solid var(--line);text-align:center;white-space:nowrap}th{color:var(--mute);font-weight:600;background:var(--bg)}
+
+/* ---- Mobil / schmale Fenster ---- */
+html{-webkit-text-size-adjust:100%}
+input,select,button{max-width:100%}
+.ftoggle,#ftoggle{display:none}
+@media(max-width:900px){
+  #ftoggle{display:inline-block;padding:4px 12px}
+  .side{position:static;max-height:none}
+  .side.shut>:not(.fh){display:none}
+  .side.shut .fh{margin-bottom:0}
+}
+@media(max-width:600px){
+  body{font-size:15px}
+  .wrap{padding:10px 10px 48px}
+  header{flex-direction:column;gap:2px;align-items:flex-start}h1{font-size:19px}
+  .card{padding:12px}
+  .search{grid-template-columns:minmax(0,1fr) auto;gap:10px}
+  .search>*{min-width:0}
+  .search>:nth-child(3),.search>:nth-child(4),.search>:nth-child(5){grid-column:1/-1}
+  .search>:nth-child(6){grid-column:1}.search>:nth-child(7){grid-column:2}
+  .search input[type=date]{width:100%;min-width:0}
+  .search button{padding:10px 14px}
+  .flexc{flex-wrap:wrap}
+  .more{gap:10px}
+  .dur{width:100%}.durl{min-width:0}
+  .rng{width:calc(100% - 20px)}
+  #usage{margin-left:0!important;width:100%}
+  .layout{gap:12px}
+  .tabs .tab{padding:8px 8px;font-size:13px}.tab small{font-size:11px}
+  .mxh{flex-direction:column}.mxh>div:last-child{justify-content:flex-start!important}
+  .tile{min-width:68px;height:56px}.tile b{font-size:16px}
+  .res{grid-template-columns:1fr}
+  .legs{padding:6px 10px 0}
+  .leg{grid-template-columns:1fr;gap:4px}
+  .al{display:flex;align-items:center;gap:8px}.al .logos{margin:0}
+  .fl{grid-template-columns:64px 1fr 64px;gap:6px}
+  .apcity{max-width:64px;font-size:11px}
+  .t{font-size:18px}
+  .fn{margin-left:0}.det{margin-left:0}
+  .buy{flex-direction:row;align-items:center;justify-content:space-between;border-left:0;border-top:1px solid var(--line)}
+  .buy>div:last-child{min-width:150px}
+  .price{font-size:22px}
+  .tags{padding:4px 10px 10px}
+  dialog#ilog{padding:14px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>✈ Feriendorf Flight Agent</h1><span class="sub">Abflugtag mit Flexibilität · Buchung direkt bei der Airline</span></header>
+<div id="keywarn" class="card" style="display:none;border-color:var(--bad);margin-bottom:12px"></div>
+
+<div class="card">
+  <div class="trip" role="radiogroup" aria-label="Reiseart"><label class="chip tp"><input type="radio" name="trip" value="round" checked>Hin- und Rückflug</label><label class="chip tp"><input type="radio" name="trip" value="oneway">Nur Hinflug</label></div>
+  <div class="search">
+    <div><label>Von</label><input id="orig" list="aps" placeholder="Stadt oder Code" autocomplete="off" value="FRA"></div>
+    <div><button type="button" class="sec swap" id="swap" title="Abflug- und Zielort tauschen" aria-label="Abflug- und Zielort tauschen">⇄</button></div>
+    <div><label>Nach</label><input id="dest" list="aps" placeholder="Stadt oder Code" autocomplete="off"><datalist id="aps"></datalist></div>
+    <div><label>Abflugtag</label><input id="depdate" type="date"></div>
+    <div><label>Flexibel (± Tage)</label><div class="flexc" title="Abflugtag um ± Tage erweitern: Haken wirken als Bereich und lassen sich nachträglich ohne neue Suche eng/weit stellen"><label class="chip"><input type="checkbox" class="fx" value="1">±1</label><label class="chip"><input type="checkbox" class="fx" value="2">±2</label><label class="chip"><input type="checkbox" class="fx" value="3">±3</label></div></div>
+    <div><label>Reisende</label><input id="adults" type="number" min="1" max="9" value="1"></div>
+    <div style="display:flex;gap:6px"><button id="go">Suchen</button><button id="stop" class="sec" disabled>Stopp</button></div>
+  </div>
+  <div class="more">
+    <div class="dur"><label class="durl">Reisedauer <b id="ndur">4 Nächte</b></label>
+      <div class="rng" id="rng"><div class="rtrack"></div><div class="rfill" id="rfill"></div>
+        <div class="rth" id="tmin" tabindex="0" role="slider" aria-label="Mindestens Nächte" aria-valuemin="1" aria-valuemax="21"></div><div class="rth" id="tmax" tabindex="0" role="slider" aria-label="Höchstens Nächte" aria-valuemin="1" aria-valuemax="21"></div></div>
+      <input type="hidden" id="nmin" value="4"><input type="hidden" id="nmax" value="4">
+      <div class="presets"><button type="button" class="chip pr" data-min="3" data-max="3">3</button><button type="button" class="chip pr" data-min="4" data-max="4">4</button><button type="button" class="chip pr" data-min="5" data-max="5">5</button><button type="button" class="chip pr" data-min="4" data-max="7">4–7</button><button type="button" class="chip pr" data-min="8" data-max="12">8–12</button></div></div>
+    <label>Klasse <select id="cabin"><option value="economy">Economy</option><option value="premium_economy">Premium Economy</option><option value="business">Business</option></select></label>
+    <label style="font-weight:700"><input type="checkbox" id="star"> Nur Star Alliance suchen <span class="note" style="font-weight:400">(spart Abfragen)</span></label>
+    <label>Suchtiefe <select id="depth"><option value="20" selected>20 Kombinationen (Standard)</option><option value="40">40 Kombinationen</option><option value="80">80 Kombinationen</option><option value="150">150 Kombinationen</option></select></label><span class="note">Zuerst Star Alliance, dann andere Airlines (je 1 Abfrage pro Kombination).</span>
+    <span id="est" class="note"></span><span id="stat" class="note"></span><span id="usage" class="note" style="margin-left:auto"></span>
+  </div>
+  <div class="bar"><i id="prog"></i></div>
+</div>
+
+<div class="layout">
+  <aside class="card side" id="side">
+    <div class="fh"><b>Filter</b><span id="fact" class="note"></span><button class="sec" id="fres">Zurücksetzen</button><button class="sec" id="ftoggle" type="button" aria-label="Filter ein-/ausklappen">▾</button></div>
+    <details class="fg" open><summary>Stopps <span class="bd" id="b_s"></span></summary>
+      <label class="fi"><span><input type="checkbox" class="stp" value="0" checked> Nonstop</span><em id="c0"></em></label>
+      <label class="fi"><span><input type="checkbox" class="stp" value="1" checked> 1 Stopp</span><em id="c1"></em></label>
+      <label class="fi"><span><input type="checkbox" class="stp" value="2" checked> 2 Stopps</span><em id="c2"></em></label>
+      <p class="hint">Mehr als 2 Stopps werden nie angezeigt.</p></details>
+    <details class="fg"><summary>Preis &amp; Dauer <span class="bd" id="b_p"></span></summary>
+      <div class="frow"><label for="maxp">Max. Preis</label><div class="fc"><input id="maxp" type="number" min="0" step="10" placeholder="egal"><span class="unit">€</span></div></div>
+      <div class="frow"><label for="durMax" title="Reisezeit je Richtung, inklusive Umstiegen">Max. Dauer</label><div class="fc"><select id="durMax"><option value="0">egal</option><option value="8">8 Std</option><option value="10">10 Std</option><option value="12">12 Std</option><option value="15">15 Std</option><option value="20">20 Std</option><option value="25">25 Std</option><option value="30">30 Std</option></select></div></div>
+      <p class="hint">Dauer gilt je Richtung.</p></details>
+    <details class="fg"><summary>Flugzeiten <span class="bd" id="b_t"></span></summary>
+      <div class="frow t"><label for="dFrom">Abflug</label><div class="fc"><select id="dFrom"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option></select><span class="unit">–</span><select id="dTo"><option value="0">00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24" selected>24</option></select></div></div>
+      <div class="frow t"><label for="aFrom">Ankunft</label><div class="fc"><select id="aFrom"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option></select><span class="unit">–</span><select id="aTo"><option value="0">00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24" selected>24</option></select></div></div>
+      <p class="hint">Uhr, Ortszeit. Gilt für Hin- und Rückflug.</p></details>
+    <details class="fg"><summary>Umstiege <span class="bd" id="b_u"></span></summary>
+      <div class="frow"><label for="layMin">Mind. Dauer</label><div class="fc"><select id="layMin"><option value="0">egal</option><option value="60">1 Std</option><option value="90">1,5 Std</option><option value="120">2 Std</option><option value="180">3 Std</option></select></div></div>
+      <div class="frow"><label for="layMax">Max. Dauer</label><div class="fc"><select id="layMax"><option value="0">egal</option><option value="120">2 Std</option><option value="180">3 Std</option><option value="240">4 Std</option><option value="360">6 Std</option><option value="480">8 Std</option></select></div></div>
+      <div class="sub">Über Flughafen <span class="hint">(abwählen = ausschließen)</span></div>
+      <div id="apfilter" class="hint">Nach der Suche wählbar, z. B. bei Visumpflicht im Transit.</div></details>
+    <details class="fg"><summary>Komfort <span class="bd" id="b_c"></span></summary>
+      <label class="fi"><span><input type="checkbox" id="bags"> Aufgabegepäck inklusive</span></label>
+      <label class="fi"><span><input type="checkbox" id="nored"> Keine Nacht-/Spätflüge</span></label></details>
+    <details class="fg" open><summary>Airlines <span class="bd" id="b_a"></span></summary>
+      <div class="al-act"><a href="#" id="alNone">Alle abwählen</a><span>·</span><a href="#" id="alAll">Alle auswählen</a></div><div class="hint" style="margin:0 0 4px">Abwählen = ausschließen</div>
+      <div id="airlines" class="hint">Nach der Suche wählbar.</div></details>
+  </aside>
+
+  <main>
+    <div class="card mxcard" id="mxcard" style="display:none"><div class="mxh"><div><h2 id="mxtitle">Preismatrix: Hinflug × Rückflug</h2><div class="note">Günstigster Preis je Datumspaar. <b>Kachel anklicken</b> zeigt nur diese Kombination (mehrere möglich), ein Klick auf einen Tag wählt Zeile bzw. Spalte. Reiner Anzeigefilter, keine neuen Abfragen.</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="sec" id="mxreset" style="display:none">Auswahl aufheben</button><button class="sec" id="mxtoggle">Matrix ausblenden</button></div></div><div class="mx" id="matrix"></div><div class="mxinfo" id="mxinfo"></div></div>
+    <div class="note" id="cnt" style="margin:0 2px 8px"></div>
+    <div class="tabs" id="tabs"></div>
+    <div id="list"><div class="card empty">Ziel und Monat eingeben und auf „Suchen“ klicken.</div></div>
+    <div style="text-align:center"><button class="sec" id="moreb" style="display:none">Mehr Ergebnisse anzeigen</button></div>
+    <p class="note">Preise aus der Ignav-API (Live-Abfrage, Zeitpunkt siehe „Stand“). Sie können sich bis zur Buchung ändern. Maßgeblich ist der Preis auf der Airline-Seite. Visa-/Transitbestimmungen bitte selbst prüfen.</p>
+  </main>
+</div>
+</div>
+
+<dialog id="ilog"><form id="ilogf" method="dialog"><h3 style="margin:0 0 4px">Bei Ignav anmelden</h3>
+<p class="note" style="margin:0 0 10px">Zeigt Verbrauch und verbleibende Gratis-Abfragen an. Ein Browser kann Anmeldungen von ignav.com nicht an diese Seite weitergeben, deshalb meldest du dich hier einmal an. Die Daten gehen nur an deinen lokalen Server und von dort an ignav.com. Gespeichert wird nur die Sitzung im Arbeitsspeicher bis zum Neustart des Servers, nicht dein Passwort.</p>
+<label>E-Mail<input id="ie" type="email" autocomplete="username" required></label>
+<label style="margin-top:8px">Passwort<input id="ip" type="password" autocomplete="current-password" required></label>
+<div id="ierr" class="err note" style="margin-top:6px"></div>
+<div class="row2"><button type="submit" id="iok">Anmelden</button><button type="button" class="sec" id="icancel">Abbrechen</button></div>
+<p class="note" style="margin:10px 0 0">Noch kein Konto? <a href="https://ignav.com/signup" target="_blank" rel="noopener">Bei Ignav registrieren</a> · Der Agent funktioniert auch ohne Anmeldung.</p></form></dialog>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let airKnown=new Set(),airNone=false,lastSearchTxt='',offAps=new Set(),searched={},failed={},cachedN=0,searchCenter='',searchedFlex=-1,lastQ=null,apInfo={},apPending=false,selCombo=new Set(),curPhase='',starOnly=false,linkCache={},all=[],es=null,seen=new Set(),total=0,sort='best',shown=15,offAirlines=new Set();
+const dd=new Date();dd.setDate(dd.getDate()+30);$('depdate').value=dd.toISOString().slice(0,10);$('depdate').min=new Date(Date.now()+864e5).toISOString().slice(0,10);
+const flexVal=()=>Math.max(0,...[...document.querySelectorAll('.fx:checked')].map(c=>+c.value));
+function estimate(){const f=flexVal(),n=oneWay()?1:Math.max(0,+$('nmax').value-+$('nmin').value+1),c=(2*f+1)*n,cap=+$('depth').value;
+ $('est').textContent=c?(c>cap?`${c} Kombinationen, davon ${cap} abgefragt (Suchtiefe erhöhen für alle)`:`${c} Kombinationen`):''}
+document.querySelectorAll('.fx').forEach(cb=>cb.addEventListener('change',()=>{const v=+cb.value;document.querySelectorAll('.fx').forEach(o=>{if(cb.checked&&+o.value<v)o.checked=true;if(!cb.checked&&+o.value>v)o.checked=false});estimate();onFlexChange()}));
+const NMIN=1,NMAX=21,pos=v=>100*(v-NMIN)/(NMAX-NMIN),clampN=v=>Math.max(NMIN,Math.min(NMAX,v));
+function setDur(a,b){a=clampN(a);b=clampN(b);if(a>b)[a,b]=[b,a];$('nmin').value=a;$('nmax').value=b;syncDur()}
+function syncDur(){const a=+$('nmin').value,b=+$('nmax').value;
+ $('tmin').style.left=pos(a)+'%';$('tmax').style.left=pos(b)+'%';$('rfill').style.left=pos(a)+'%';$('rfill').style.width=(pos(b)-pos(a))+'%';
+ $('tmin').setAttribute('aria-valuenow',a);$('tmax').setAttribute('aria-valuenow',b);
+ $('ndur').textContent=a===b?a+(a===1?' Nacht':' Nächte'):a+'–'+b+' Nächte';
+ document.querySelectorAll('.pr').forEach(c=>c.classList.toggle('on',+c.dataset.min===a&&+c.dataset.max===b));estimate()}
+const valAt=e=>{const r=$('rng').getBoundingClientRect();return clampN(Math.round(NMIN+(NMAX-NMIN)*(e.clientX-r.left)/r.width))};
+let drag=null;
+['tmin','tmax'].forEach(id=>{const t=$(id),o=$(id==='tmin'?'tmax':'tmin');
+ t.addEventListener('pointerdown',e=>{drag={other:+$(id==='tmin'?'nmax':'nmin').value};t.setPointerCapture(e.pointerId);t.classList.add('grab');e.preventDefault();e.stopPropagation()});
+ t.addEventListener('pointermove',e=>{if(!drag)return;const v=valAt(e);setDur(v,drag.other);t.style.left=pos(v)+'%';o.style.left=pos(drag.other)+'%'});
+ t.addEventListener('pointerup',()=>{drag=null;t.classList.remove('grab');syncDur()});
+ t.addEventListener('pointercancel',()=>{drag=null;t.classList.remove('grab');syncDur()});
+ t.addEventListener('keydown',e=>{const k=['ArrowLeft','ArrowDown'].includes(e.key)?-1:['ArrowRight','ArrowUp'].includes(e.key)?1:0;if(!k)return;e.preventDefault();
+  const own=+$(id==='tmin'?'nmin':'nmax').value,oth=+$(id==='tmin'?'nmax':'nmin').value;id==='tmin'?setDur(own+k,oth):setDur(oth,own+k)})});
+$('rng').addEventListener('pointerdown',e=>{const v=valAt(e),a=+$('nmin').value,b=+$('nmax').value;if(Math.abs(v-a)<=Math.abs(v-b)&&!(a===b&&v>b))setDur(v,b);else setDur(a,v)});
+document.querySelectorAll('.pr').forEach(c=>c.addEventListener('click',()=>setDur(+c.dataset.min,+c.dataset.max)));
+$('depth').addEventListener('input',estimate);syncDur();tripUI();
+const STAR=['A3','AC','CA','AI','NZ','NH','OZ','OS','AV','SN','CM','OU','MS','ET','BR','LO','LH','SK','ZH','SQ','SA','LX','TP','TG','TK','UA'];
+
+fetch('/api/status').then(r=>r.json()).then(s=>{if(!s.key){const k=$('keywarn');k.style.display='block';k.innerHTML='<b>API-Key fehlt.</b> Lege neben server.py eine Datei <code>.env</code> mit <code>IGNAV_API_KEY=dein_key</code> an und starte den Server neu.'}});
+
+let t;['dest','orig'].forEach(id=>$(id).addEventListener('input',()=>{clearTimeout(t);const q=$(id).value.trim();if(q.length<2)return;t=setTimeout(async()=>{try{const r=await fetch('/api/airports?q='+encodeURIComponent(q));const j=await r.json();const l=Array.isArray(j)?j:(j.airports||[]);$('aps').innerHTML=l.map(a=>`<option value="${esc(a.code)}">${esc(a.city)} – ${esc(a.name)} (${esc(a.country)})</option>`).join('')}catch(e){}},250)}));
+try{const o=localStorage.getItem('orig');if(o&&/^[A-Z]{3}$/.test(o))$('orig').value=o}catch(e){}
+$('swap').onclick=()=>{const a=$('orig').value;$('orig').value=$('dest').value;$('dest').value=a;try{if(/^[A-Z]{3}$/i.test($('orig').value))localStorage.setItem('orig',$('orig').value.toUpperCase())}catch(e){}};
+function oneWay(){return document.querySelector('input[name=trip]:checked').value==='oneway'}
+function tripUI(){const o=oneWay();document.querySelector('.dur').style.display=o?'none':'';estimate()}
+document.querySelectorAll('input[name=trip]').forEach(r=>r.addEventListener('change',tripUI));
+
+const fmtT=s=>s?s.slice(11,16):'';
+const fmtD=s=>s?new Date(s.slice(0,10)+'T12:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'}):'';
+const hm=m=>m==null?'?':Math.floor(m/60)+' Std '+String(m%60).padStart(2,'0')+' Min';
+const hmS=m=>m==null?'?':Math.floor(m/60)+'h'+String(m%60).padStart(2,'0');
+const money=p=>new Intl.NumberFormat('de-DE',{style:'currency',currency:p.currency,maximumFractionDigits:0}).format(p.amount);
+
+function legInfo(l){const s=l.segments||[];const lay=[];for(let i=1;i<s.length;i++){const a=Date.parse(s[i-1].arrival_time_utc),b=Date.parse(s[i].departure_time_utc);lay.push({ap:s[i].departure_airport,min:isNaN(a)||isNaN(b)?null:Math.round((b-a)/60000)})}
+ const first=s[0],last=s[s.length-1];const dayOff=Math.round((Date.parse(last.arrival_time_local.slice(0,10))-Date.parse(first.departure_time_local.slice(0,10)))/864e5);
+ return{stops:Math.max(0,s.length-1),dur:l.duration_minutes??s.reduce((x,y)=>x+y.duration_minutes,0),lay,first,last,dayOff,
+  segs:s,
+  flights:s.map(x=>(x.marketing_carrier_code||'')+' '+(x.flight_number||'')).join(' · '),
+  codes:[...new Set(s.map(x=>x.marketing_carrier_code).filter(Boolean))],
+  carrier:l.carrier||s[0].operating_carrier_name||''}}
+function enrich(it,c,phase){const o=legInfo(it.outbound),i=it.inbound?legInfo(it.inbound):null;
+ const hr=x=>+x.slice(11,13);
+ const red=hr(o.first.departure_time_local)<6||hr(o.last.arrival_time_local)>=23||(i&&(hr(i.first.departure_time_local)<6||hr(i.last.arrival_time_local)>=23));
+ const th=t=>+t.slice(11,13)+(+t.slice(14,16))/60;
+ return{it,c,o,i,deps:[th(o.first.departure_time_local),...(i?[th(i.first.departure_time_local)]:[])],arrs:[th(o.last.arrival_time_local),...(i?[th(i.last.arrival_time_local)]:[])],lays:[...o.lay,...(i?i.lay:[])],layAps:[...new Set([...o.lay,...(i?i.lay:[])].map(y=>y.ap))],price:it.price.amount,maxStops:Math.max(o.stops,i?i.stops:0),stops:o.stops+(i?i.stops:0),dur:o.dur+(i?i.dur:0),red:!!red,
+  bag:!!(it.bags&&it.bags.checked>0),selfT:!!it.requires_self_transfer,key:it.ignav_id,star:phase==='star',
+  codes:[...new Set([...o.codes,...(i?i.codes:[])])],airline:o.carrier}}
+
+// Fester Score für "Beste": je zur Hälfte Preis und Komfort (Stopps, Dauer, Nachtflug, Gepäck)
+function score(arr){if(!arr.length)return;const ps=arr.map(x=>x.price),pmin=Math.min(...ps),pmax=Math.max(...ps),ds=arr.map(x=>x.dur),dmin=Math.min(...ds),dmax=Math.max(...ds);
+ for(const x of arr){const pn=pmax>pmin?(x.price-pmin)/(pmax-pmin):0,dn=dmax>dmin?(x.dur-dmin)/(dmax-dmin):0;
+  const comfort=Math.min(1,.4*Math.min(x.stops,4)/4+.4*dn+(x.red?.12:0)+(x.bag?0:.08)+(x.selfT?.5:0));x.cost=.5*pn+.5*comfort}}
+
+function logoErr(i){const c=i.dataset.c,n=+i.dataset.n||0;if(n===0){i.dataset.n=1;i.src='https://pics.avs.io/64/64/'+encodeURIComponent(c)+'.png'}else{const s=document.createElement('span');s.className='logo fb';s.textContent=c;i.replaceWith(s)}}
+const logos=codes=>'<div class="logos">'+codes.map(c=>`<img class="logo" alt="${esc(c)}" title="${esc(c)}" loading="lazy" referrerpolicy="no-referrer" data-c="${esc(c)}" src="https://www.gstatic.com/flights/airline_logos/70px/${encodeURIComponent(c)}.png" onerror="logoErr(this)">`).join('')+'</div>';
+const apTip=c=>{const a=apInfo[c];return a?`${a.name}, ${a.city} (${a.country})`:c};
+const apHtml=c=>{const a=apInfo[c];return`<div class="ap" title="${esc(apTip(c))}"><b class="apc">${esc(c)}</b>${a?`<span class="apcity">${esc(a.city)}</span>`:''}</div>`};
+async function loadAirports(){if(apPending)return;const need=new Set();for(const x of all)for(const l of [x.o,x.i]){if(!l)continue;[l.first.departure_airport,l.last.arrival_airport,...l.lay.map(y=>y.ap)].forEach(c=>{if(c&&!(c in apInfo))need.add(c)})}
+ if(!need.size)return;apPending=true;const codes=[...need];codes.forEach(c=>apInfo[c]=apInfo[c]||null);
+ try{const r=await fetch('/api/airportinfo?codes='+codes.slice(0,40).join(','));const j=await r.json();Object.assign(apInfo,j);codes.slice(0,40).forEach(c=>{if(apInfo[c]===null)apInfo[c]=undefined})}catch(e){}
+ apPending=false;render();if(need.size>40)loadAirports()}
+const apLine=(c,t)=>`<b class="apc" title="${esc(apTip(c))}">${esc(c)}</b>${apInfo[c]?' '+esc(apInfo[c].city):''}`;
+const dShort=t=>new Date(t.slice(0,10)+'T12:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
+function detHtml(l){const sg=l.segs||[];let h='';
+ sg.forEach((g,i)=>{const dayOff=Math.round((Date.parse(g.arrival_time_local.slice(0,10))-Date.parse(g.departure_time_local.slice(0,10)))/864e5);
+  const cc=(g.marketing_carrier_code||'')+' '+(g.flight_number||'');
+  h+=`<div class="seg"><div class="rail"><i></i></div><div class="body"><div class="hd">${dShort(g.departure_time_local)} · ${fmtT(g.departure_time_local)} ${apLine(g.departure_airport)}</div>
+  <div class="sub2">Flug ${esc(cc)} · ${esc(g.operating_carrier_name||'')} · Flugzeit ${hm(g.duration_minutes)}${g.aircraft?' · '+esc(g.aircraft):''}</div>
+  <div class="hd" style="margin-top:4px">${dShort(g.arrival_time_local)} · ${fmtT(g.arrival_time_local)}${dayOff>0?` <small style="color:var(--bad)">+${dayOff}</small>`:''} ${apLine(g.arrival_airport)}</div></div></div>`;
+  const n=sg[i+1];if(n){const a=Date.parse(g.arrival_time_utc),b=Date.parse(n.departure_time_utc),m=isNaN(a)||isNaN(b)?null:Math.round((b-a)/60000);
+   const night=g.arrival_time_local.slice(0,10)!==n.departure_time_local.slice(0,10),chg=g.arrival_airport!==n.departure_airport;
+   const warn=(m!=null&&(m<60||m>360))||night||chg;
+   h+=`<div class="lay2 ${warn?'w':''}">⏱ Aufenthalt in ${apLine(g.arrival_airport)}: <b>${hm(m)}</b>${m!=null&&m<60?' · knapp, Anschluss riskant':''}${m!=null&&m>360?' · lange Wartezeit':''}${night?' · über Nacht':''}${chg?` · Flughafenwechsel zu ${esc(n.departure_airport)}`:''}</div>`}});
+ return h}
+const openD=new Set();
+function legHtml(name,l,key,dir){if(!l)return'';const id=key+'|'+dir,op=openD.has(id);
+ const dots=l.lay.map((_,k)=>`<i style="left:${100*(k+1)/(l.lay.length+1)}%"></i>`).join('');
+ const stopTxt=l.stops===0?'<span class="nonstop">Nonstop</span>':`<span>${l.stops} Stopp${l.stops>1?'s':''}:</span>`+l.lay.map(y=>`<span class="${y.min!=null&&(y.min<60||y.min>360)?'w':''}"><b class="apc" title="${esc(apTip(y.ap))}">${esc(y.ap)}</b>${apInfo[y.ap]?' '+esc(apInfo[y.ap].city):''} ${hmS(y.min)}</span>`).join('');
+ return`<div class="legblock"><div class="legh"><span>${name} · ${fmtD(l.first.departure_time_local)}</span><button class="dtb" data-d="${esc(id)}">${op?'Details ▴':'Details ▾'}</button></div><div class="leg"><div class="al">${logos(l.codes)}<b>${esc(l.carrier)}</b></div>
+ <div class="fl"><div><div class="t">${fmtT(l.first.departure_time_local)}</div>${apHtml(l.first.departure_airport)}</div>
+ <div class="mid">${hm(l.dur)}<div class="line">${dots}</div><div class="stops">${stopTxt}</div></div>
+ <div class="r"><div class="t">${fmtT(l.last.arrival_time_local)}${l.dayOff>0?`<small>+${l.dayOff}</small>`:''}</div>${apHtml(l.last.arrival_airport)}</div></div></div>
+ <div class="fn">${esc(l.flights)}</div><div class="det" data-dd="${esc(id)}" ${op?'':'hidden'}>${detHtml(l)}</div></div>`}
+
+function card(x,deal){const tags=[x.c.ret?`<span class="tag">${x.c.nights} Nächte</span>`:'',x.bag?'<span class="tag good">Aufgabegepäck inklusive</span>':'<span class="tag warn">Aufgabegepäck evtl. kostenpflichtig</span>',x.it.bags&&x.it.bags.carry_on>0?'<span class="tag good">Handgepäck inklusive</span>':'',x.selfT?'<span class="tag warn">Getrennte Tickets: Anschluss nicht garantiert</span>':'',x.red?'<span class="tag warn">Nacht-/Spätflug</span>':'',x.star?'<span class="tag good">★ Star Alliance</span>':'',x.it.price.status==='verified'?'<span class="tag good">Preis verifiziert</span>':'<span class="tag">Preis unverifiziert</span>'].join('');
+ return`<div class="res"><div><div class="legs">${legHtml('Hinflug',x.o,x.key,'o')}${legHtml('Rückflug',x.i,x.key,'i')}</div><div class="tags">${tags}</div></div>
+ <div class="buy"><div class="price">${money(x.it.price)}<small>gesamt p. P. · Stand ${esc(x.c.seen)}</small></div><div id="lk-${esc(x.key)}">${linkCache[x.key]||`<button data-k="${esc(x.key)}" style="width:100%">Bei Airline buchen</button>`}</div></div></div>`}
+
+const AIRL={LH:'lufthansa.com',OS:'austrian.com',LX:'swiss.com',SN:'brusselsairlines.com',TK:'turkishairlines.com',TG:'thaiairways.com',SQ:'singaporeair.com',UA:'united.com',AC:'aircanada.com',NH:'ana.co.jp',EY:'etihad.com',QR:'qatarairways.com',EK:'emirates.com',AY:'finnair.com',DE:'condor.com',CX:'cathaypacific.com',CA:'airchina.com',AI:'airindia.com',ET:'ethiopianairlines.com',MS:'egyptair.com',TP:'flytap.com',LO:'lot.com',KL:'klm.com',AF:'airfrance.com',BA:'britishairways.com',GF:'gulfair.com',WY:'omanair.com',SV:'saudia.com',CZ:'csair.com',OZ:'flyasiana.com',BR:'evaair.com',NZ:'airnewzealand.com',A3:'aegeanair.com',CM:'copaair.com',AV:'avianca.com',OU:'croatiaairlines.com',SA:'flysaa.com',ZH:'shenzhenair.com',SK:'flysas.com'};
+function fallbackHtml(x){const o=x.o,i=x.i;const hp=x.codes.filter(c=>AIRL[c]).map(c=>`<a class="book" target="_blank" rel="noopener" href="https://www.${AIRL[c]}">${esc(c)}: ${esc(AIRL[c])} öffnen</a>`).join('');
+ return`<div class="note" style="margin-bottom:6px">Die API liefert für dieses Angebot keinen direkten Airline-Link. Suche auf der Airline-Seite: ${esc(o.first.departure_airport)}→${esc(o.last.arrival_airport)}, ${fmtD(o.first.departure_time_local)}${i?' bis '+fmtD(i.first.departure_time_local):''}, ${esc(o.flights)}${i?' / '+esc(i.flights):''}.</div>${hp}`}
+async function loadLinks(k){const x=all.find(a=>a.key===k);const put=h=>{linkCache[k]=h;document.querySelectorAll('[id="lk-'+k+'"]').forEach(el=>el.innerHTML=h)};
+ const w=window.open('about:blank','_blank');  // sofort öffnen, damit der Popup-Blocker nicht greift
+ put('<span class="note">Airline-Link wird geladen…</span>');
+ try{const r=await fetch('/api/links?ignav_id='+encodeURIComponent(k));const j=await r.json();if(j.error)throw new Error(j.error);
+  if(j.links.length){const a=j.links[0];if(w){w.opener=null;w.location.href=a.url}
+   put((w?'<div class="note">Airline-Seite im neuen Tab geöffnet.</div>':'<div class="note">Popup wurde blockiert – bitte hier klicken:</div>')+j.links.map(l=>`<a class="book" target="_blank" rel="noopener" href="${esc(l.url)}">Bei ${esc(l.provider_name)} buchen${l.price?' · '+money(l.price):''}</a>${l.specificity==='search_results'?'<div class="note">öffnet die Airline-Suche</div>':''}`).join(''))}
+  else{if(w)w.close();put(x?fallbackHtml(x):'<span class="note">Kein Airline-Link verfügbar.</span>')}}
+ catch(e){if(w)w.close();put('<span class="err note">'+esc(e.message)+'</span><button data-k="'+esc(k)+'" style="width:100%;margin-top:6px">Erneut versuchen</button>');delete linkCache[k]}}
+document.addEventListener('click',e=>{const b=e.target.closest('.dtb');if(!b)return;const id=b.dataset.d,op=!openD.has(id);op?openD.add(id):openD.delete(id);
+ document.querySelectorAll('.dtb').forEach(x=>{if(x.dataset.d===id)x.textContent=op?'Details ▴':'Details ▾'});document.querySelectorAll('.det').forEach(x=>{if(x.dataset.dd===id)x.hidden=!op})});
+document.addEventListener('click',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)loadLinks(k)});
+
+function timeOk(x){const dF=+$('dFrom').value,dT=+$('dTo').value,aF=+$('aFrom').value,aT=+$('aTo').value,mp=+$('maxp').value,dm=+$('durMax').value*60,lMin=+$('layMin').value,lMax=+$('layMax').value;
+ if(mp&&x.price>mp)return false;
+ if(dm&&(x.o.dur>dm||(x.i&&x.i.dur>dm)))return false;
+ if(x.deps.some(h=>h<dF||(dT<24&&h>=dT)))return false;
+ if(x.arrs.some(h=>h<aF||(aT<24&&h>=aT)))return false;
+ if(lMin&&x.lays.some(y=>y.min!=null&&y.min<lMin))return false;
+ if(lMax&&x.lays.some(y=>y.min!=null&&y.min>lMax))return false;
+ if(x.layAps.some(a=>offAps.has(a)))return false;
+ return true}
+function filtered(ign){const st=new Set([...document.querySelectorAll('.stp:checked')].map(c=>+c.value));
+ return all.filter(x=>x.maxStops<=2&&st.has(x.maxStops)&&(!$('star').checked||x.star)&&(!$('bags').checked||x.bag)&&(!$('nored').checked||!x.red)&&!x.codes.some(c=>offAirlines.has(c))&&timeOk(x)&&(!searchCenter||Math.abs(Math.round((Date.parse(x.c.dep)-Date.parse(searchCenter))/864e5))<=flexVal())&&(ign||!selCombo.size||selCombo.has(x.c.dep+'|'+x.c.ret)))}
+
+function renderApFilter(){const m={};all.forEach(x=>x.layAps.forEach(a=>{m[a]=(m[a]||0)+1}));const keys=Object.keys(m).sort((a,b)=>m[b]-m[a]);if(!keys.length)return;
+ const h=keys.map(a=>`<label class="fi"><span><input type="checkbox" class="apx" value="${esc(a)}" ${offAps.has(a)?'':'checked'}> <b class="apc" title="${esc(apTip(a))}">${esc(a)}</b>${apInfo[a]?' '+esc(apInfo[a].city):''}</span><em>${m[a]}×</em></label>`).join('');
+ if($('apfilter').dataset.h!==h){$('apfilter').dataset.h=h;$('apfilter').innerHTML=h}}
+function renderFilters(){renderApFilter();const cnt={0:0,1:0,2:0};all.forEach(x=>{if(x.maxStops<=2)cnt[x.maxStops]++});[0,1,2].forEach(k=>$('c'+k).textContent=cnt[k]||'');
+ const m={};all.forEach(x=>x.codes.forEach(c=>{if(!m[c])m[c]={min:1e9,name:c};m[c].min=Math.min(m[c].min,x.price);if(x.codes.length===1)m[c].name=x.airline||c}));
+ const keys=Object.keys(m).sort((a,b)=>m[a].min-m[b].min);keys.forEach(c=>{if(airNone&&!airKnown.has(c))offAirlines.add(c);airKnown.add(c)});
+ if(!keys.length)return;const h=keys.map(c=>`<label class="fi"><span><input type="checkbox" class="alc" value="${esc(c)}" ${offAirlines.has(c)?'':'checked'}> ${esc(m[c].name)}</span><em>ab ${Math.round(m[c].min)} €</em></label>`).join('');
+ if($('airlines').dataset.h!==h){$('airlines').dataset.h=h;$('airlines').innerHTML=h}}
+
+function badges(){const v=id=>+$(id).value,n=x=>x?x:0;
+ const b={b_s:[...document.querySelectorAll('.stp')].some(c=>!c.checked)?1:0,
+  b_p:(v('maxp')?1:0)+(v('durMax')?1:0),
+  b_t:((v('dFrom')!==0||v('dTo')!==24)?1:0)+((v('aFrom')!==0||v('aTo')!==24)?1:0),
+  b_u:(v('layMin')?1:0)+(v('layMax')?1:0)+(offAps.size?1:0),
+  b_c:($('bags').checked?1:0)+($('nored').checked?1:0),
+  b_a:offAirlines.size?1:0};
+ let t=0;for(const k in b){$(k).textContent=b[k]||'';t+=b[k]}$('fact').textContent=t?t+' aktiv':''}
+function render(){badges();renderFilters();const f=filtered();score(f);$('cnt').textContent=all.length?(f.length===all.length?all.length+' Angebote':f.length+' von '+all.length+' Angeboten sichtbar (Rest durch Filter ausgeblendet)'):'';
+ const byBest=[...f].sort((a,b)=>a.cost-b.cost),byPrice=[...f].sort((a,b)=>a.price-b.price),byFast=[...f].sort((a,b)=>a.dur-b.dur);
+ const tb=(k,n,arr)=>`<button class="tab ${sort===k?'on':''}" data-s="${k}">${n}<small>${arr[0]?money(arr[0].it.price)+' · '+hm(arr[0].dur):'–'}</small></button>`;
+ $('tabs').innerHTML=all.length?tb('best','Beste',byBest)+tb('cheap','Günstigste',byPrice)+tb('fast','Schnellste',byFast):'';
+ const list=sort==='best'?byBest:sort==='cheap'?byPrice:byFast;
+ if(all.length){const open=[...document.querySelectorAll('.buy a.book')].length;$('list').innerHTML=list.length?list.slice(0,shown).map(x=>card(x)).join(''):'<div class="card empty">Keine Treffer mit diesen Filtern.</div>';$('moreb').style.display=list.length>shown?'inline-block':'none'}
+ renderMatrix()}
+
+
+const fmtS=d=>new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
+const fmtH=d=>{const t=fmtS(d).split(', ');return t.length>1?t[0]+'<br>'+t[1]:fmtS(d)};
+const inFlex=d=>!searchCenter||Math.abs(Math.round((Date.parse(d)-Date.parse(searchCenter))/864e5))<=flexVal();
+function renderMatrixOne(base,sk){
+ const best={};for(const x of base){const k=x.c.dep+'|';if(!best[k]||x.price<best[k].price)best[k]=x}
+ const deps=[...new Set([...base.map(x=>x.c.dep),...sk.map(k=>k.split('|')[0])])].sort(),keys=Object.keys(best),pr=keys.map(k=>best[k].price),lo=pr.length?Math.min(...pr):0,hi=pr.length?Math.max(...pr):0,has=selCombo.size>0;
+ let h=`<div class="mxg" style="grid-template-columns:repeat(${deps.length},minmax(84px,1fr))">`+deps.map(d=>`<button class="mh ${has&&selCombo.has(d+'|')?'on':''}" data-dep="${d}" title="Tag wählen">${fmtH(d)}</button>`).join('');
+ for(const d of deps){const k=d+'|',b=best[k];
+  if(!b){const st=failed[k]?['Fehler','Abfrage fehlgeschlagen – erneut auf „Suchen“ klicken']:(k in searched)?['keine Flüge','Abgefragt, aber ohne Treffer (oder durch Filter ausgeblendet)']:['·','Nicht abgefragt'];h+=`<div class="tile empty" title="${esc(st[1])}" style="${failed[k]?'border-color:var(--bad);color:var(--bad)':''}"><small>${esc(st[0])}</small></div>`;continue}
+  const q=hi>lo?(b.price-lo)/(hi-lo):0,sel=selCombo.has(k);
+  h+=`<button class="tile ${sel?'sel':''} ${has&&!sel?'dim':''} ${b.price===lo?'best':''}" data-cell="${k}" style="background:hsl(${125-125*q} 60% 72%)" title="${esc(fmtS(d))}: ab ${Math.round(b.price)} €. Klicken zum Anzeigen/Ausblenden"><b>${Math.round(b.price)} €</b></button>`}
+ $('matrix').innerHTML=h+'</div>';$('mxreset').style.display=has?'inline-block':'none';
+ const cheapest=keys.length?keys.reduce((a,k)=>best[k].price<best[a].price?k:a,keys[0]):null;const nf=Object.keys(failed).length;
+ $('mxinfo').innerHTML=(has?`<b>${selCombo.size}</b> von ${keys.length} Tagen ausgewählt · `:'')+(cheapest?`Günstigster Tag: ${esc(fmtS(cheapest.split('|')[0]))} ab ${Math.round(best[cheapest].price)} €`:'Keine Angebote')+(nf?` · <span class="err">${nf} Abfrage(n) fehlgeschlagen</span>`:'');mxState()}
+function renderMatrix(){const base=filtered(true);const sk=Object.keys(searched).filter(k=>inFlex(k.split('|')[0]));$('mxcard').style.display=base.length||sk.length?'block':'none';if(!base.length&&!sk.length)return;
+ const ow=lastQ&&lastQ.get('trip')==='oneway';$('mxtitle').textContent=ow?'Preise je Abflugtag':'Preismatrix: Hinflug × Rückflug';if(ow)return renderMatrixOne(base,sk);
+ const best={};for(const x of base){const k=x.c.dep+'|'+x.c.ret;if(!best[k]||x.price<best[k].price)best[k]=x}
+ const deps=[...new Set([...base.map(x=>x.c.dep),...sk.map(k=>k.split('|')[0])])].sort(),rets=[...new Set([...base.map(x=>x.c.ret),...sk.map(k=>k.split('|')[1])])].sort(),keys=Object.keys(best);
+ const pr=keys.map(k=>best[k].price),lo=pr.length?Math.min(...pr):0,hi=pr.length?Math.max(...pr):0,has=selCombo.size>0;
+ const rowSel=d=>rets.filter(r=>best[d+'|'+r]).every(r=>selCombo.has(d+'|'+r)),colSel=r=>deps.filter(d=>best[d+'|'+r]).every(d=>selCombo.has(d+'|'+r));
+ let h=`<div class="mxg" style="grid-template-columns:78px repeat(${rets.length},minmax(74px,1fr))"><div class="mh corner">Hin ↓<br>Rück →</div>`+rets.map(r=>`<button class="mh ${has&&colSel(r)?'on':''}" data-ret="${r}" title="Ganze Spalte wählen">${fmtH(r)}</button>`).join('');
+ for(const d of deps){h+=`<button class="mh ${has&&rowSel(d)?'on':''}" data-dep="${d}" title="Ganze Zeile wählen">${fmtH(d)}</button>`;
+  for(const r of rets){const k=d+'|'+r,b=best[k];if(!b){const st=failed[k]?['Fehler','Abfrage fehlgeschlagen – erneut auf „Suchen“ klicken (nur dieses Paar wird neu abgefragt)']:(k in searched)?['keine Flüge','Abgefragt, aber ohne Treffer (oder durch Filter ausgeblendet)']:['·','Nicht abgefragt'];h+=`<div class="tile empty" title="${esc(st[1])}" style="${failed[k]?'border-color:var(--bad);color:var(--bad)':''}"><small>${esc(st[0])}</small></div>`;continue}
+   const q=hi>lo?(b.price-lo)/(hi-lo):0,sel=selCombo.has(k);
+   h+=`<button class="tile ${sel?'sel':''} ${has&&!sel?'dim':''} ${b.price===lo?'best':''}" data-cell="${k}" style="background:hsl(${125-125*q} 60% 72%)" title="${esc(fmtS(d)+' → '+fmtS(r))}: ab ${Math.round(b.price)} €. Klicken zum Anzeigen/Ausblenden"><b>${Math.round(b.price)} €</b><small>${b.c.nights} Nächte</small></button>`}}
+ $('matrix').innerHTML=h+'</div>';$('mxreset').style.display=has?'inline-block':'none';
+ const cheapest=keys.length?keys.reduce((a,k)=>best[k].price<best[a].price?k:a,keys[0]):null;const nf=Object.keys(failed).length;
+ $('mxinfo').innerHTML=(has?`<b>${selCombo.size}</b> von ${keys.length} Kombinationen ausgewählt · `:'')+(cheapest?`Günstigste Kombination: ${esc(fmtS(cheapest.split('|')[0]))} → ${esc(fmtS(cheapest.split('|')[1]))} ab ${Math.round(best[cheapest].price)} €`:'Keine Angebote')+(nf?` · <span class="err">${nf} Abfrage(n) fehlgeschlagen</span>`:'')+' · „keine Flüge“ = abgefragt, aber kein Angebot erhalten';mxState()}
+function toggleKeys(ks){const all_=ks.every(k=>selCombo.has(k));ks.forEach(k=>all_?selCombo.delete(k):selCombo.add(k));shown=15;render()}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-dep],[data-ret],[data-cell]');if(!t||!t.closest('#matrix'))return;
+ const keys=[...document.querySelectorAll('#matrix [data-cell]')].map(c=>c.dataset.cell);
+ if(t.dataset.cell)toggleKeys([t.dataset.cell]);else if(t.dataset.dep)toggleKeys(keys.filter(k=>k.startsWith(t.dataset.dep+'|')));else toggleKeys(keys.filter(k=>k.endsWith('|'+t.dataset.ret)))});
+function mxState(){const c=$('mxcard').classList.contains('col'),n=selCombo.size;$('mxtoggle').textContent=c?'Matrix einblenden'+(n?' ('+n+' gewählt)':''):'Matrix ausblenden'}
+$('mxtoggle').onclick=()=>{const c=$('mxcard').classList.toggle('col');try{localStorage.setItem('mxcol',c?'1':'0')}catch(e){}mxState()};
+try{if(localStorage.getItem('mxcol')==='1')$('mxcard').classList.add('col')}catch(e){}
+$('mxreset').onclick=()=>{selCombo.clear();render()};
+document.addEventListener('click',e=>{const s=e.target.closest('[data-s]');if(s){sort=s.dataset.s;render()}});
+document.addEventListener('change',e=>{if(e.target.classList.contains('apx')){e.target.checked?offAps.delete(e.target.value):offAps.add(e.target.value)}if(e.target.classList.contains('alc')){e.target.checked?offAirlines.delete(e.target.value):offAirlines.add(e.target.value)}if(e.target.closest('.side')){shown=15;render()}});
+$('star').addEventListener('change',()=>{
+ if($('star').checked&&es&&curPhase==='other'){stop();$('stat').innerHTML='Suche bei anderen Airlines abgebrochen: nur Star Alliance. '+all.length+' Angebote'}
+ else if(!$('star').checked&&starOnly&&all.length)$('stat').innerHTML='<span class="err">Die letzte Suche lief nur bei Star Alliance. Für andere Airlines bitte neu suchen.</span>';render()});
+$('alNone').onclick=e=>{e.preventDefault();airNone=true;document.querySelectorAll('.alc').forEach(c=>offAirlines.add(c.value));$('airlines').dataset.h='';shown=15;render()};
+$('alAll').onclick=e=>{e.preventDefault();airNone=false;airKnown=new Set();offAirlines=new Set();$('airlines').dataset.h='';shown=15;render()};
+$('ftoggle').onclick=e=>{e.stopPropagation();$('side').classList.toggle('shut')};
+document.querySelector('.fh').addEventListener('click',e=>{if(e.target.closest('button')&&e.target.id!=='ftoggle')return;if(matchMedia('(max-width:900px)').matches)$('side').classList.toggle('shut')});
+if(matchMedia('(max-width:900px)').matches)$('side').classList.add('shut');
+$('maxp').addEventListener('input',()=>{shown=15;render()});
+$('fres').onclick=()=>{['dFrom','aFrom'].forEach(i=>$(i).value=0);['dTo','aTo'].forEach(i=>$(i).value=24);['durMax','layMin','layMax'].forEach(i=>$(i).value=0);$('maxp').value='';
+ document.querySelectorAll('.stp').forEach(c=>c.checked=true);$('bags').checked=false;$('nored').checked=false;offAirlines=new Set();airNone=false;airKnown=new Set();offAps=new Set();$('airlines').dataset.h='';$('apfilter').dataset.h='';shown=15;render()};
+$('moreb').onclick=()=>{shown+=15;render()};
+
+function stop(){if(es){es.close();es=null}$('go').disabled=false;$('stop').disabled=true}
+$('stop').onclick=()=>{stop();$('stat').textContent+=' · gestoppt'};
+async function usage(fresh){try{const d=await (await fetch('/api/dashboard'+(fresh?'?fresh=1':''))).json();
+ if(d.public){$('usage').innerHTML='';return}
+ const login='<a href="#" id="ilogin" title="Zeigt Verbrauch und verbleibende Gratis-Abfragen. Der Agent funktioniert auch ohne.">Bei Ignav anmelden</a>'+(d.expired?' <span class="note">(Sitzung abgelaufen)</span>':'');
+ if(d.configured&&d.ok){const fr=d.freeRemaining;$('usage').innerHTML='Ignav: letzte 24 h <b>'+d.requests24h+'</b> Abfragen'+(fr!=null?' · noch <b'+(fr<=200?' class="err"':'')+'>'+fr+'</b> gratis':'')+(d.cost24h>0?' · $'+Number(d.cost24h).toFixed(2):'')+(lastSearchTxt?' · '+lastSearchTxt:'')+' · <a href="https://ignav.com/dashboard" target="_blank" rel="noopener">Dashboard</a>'+(d.source==='login'?' · <a href="#" id="ilogout">Abmelden</a>':'')}
+ else if(d.configured)$('usage').innerHTML='<span class="err">'+esc(d.error)+'</span> · '+login;
+ else $('usage').innerHTML=login}catch(e){}}
+document.addEventListener('click',async e=>{
+ if(e.target.id==='ilogin'){e.preventDefault();$('ierr').textContent='';$('ilog').showModal();$('ie').focus()}
+ if(e.target.id==='ilogout'){e.preventDefault();await fetch('/api/dashboard/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});usage(true)}});
+$('icancel').onclick=()=>$('ilog').close();
+$('ilogf').addEventListener('submit',async e=>{e.preventDefault();$('iok').disabled=true;$('ierr').textContent='';
+ try{const r=await fetch('/api/dashboard/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('ie').value,password:$('ip').value})});const j=await r.json();
+  $('ip').value='';if(r.ok&&j.ok){$('ilog').close();usage(true)}else $('ierr').textContent=j.error||'Anmeldung fehlgeschlagen'}
+ catch(x){$('ierr').textContent='Anmeldung nicht möglich'}$('iok').disabled=false});
+usage();
+function runScan(q,ext){
+ $('go').disabled=true;$('stop').disabled=false;$('prog').style.width='0';$('stat').textContent=ext?'Erweitere Suche …':'Starte…';
+ es=new EventSource('/api/scan?'+q);let warns=0;
+ es.addEventListener('start',e=>{total=JSON.parse(e.data).total;if(!total){stop();$('stat').textContent='Keine neuen Tage zu suchen.';return}$('stat').textContent='0 / '+total+' Abfragen'+(ext?' (Erweiterung)':'')});
+ es.addEventListener('result',e=>{const d=JSON.parse(e.data);curPhase=d.phase;if(d.cached)cachedN++;{const k=d.dep+'|'+d.ret;searched[k]=(searched[k]||0)+d.itineraries.length;delete failed[k]}const c={dep:d.dep,ret:d.ret,nights:d.nights,seen:new Date().toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})};
+  for(const it of d.itineraries){if(seen.has(it.ignav_id))continue;seen.add(it.ignav_id);all.push(enrich(it,c,d.phase))}
+  loadAirports();$('prog').style.width=(100*d.done/total)+'%';$('stat').textContent=(d.phase==='star'?'Phase 1: Star Alliance':'Phase 2: andere Airlines')+' · '+d.done+' / '+total+' Abfragen · '+all.length+' Angebote'+(cachedN?' · '+cachedN+' aus Cache':'')+(warns?' · '+warns+' Fehler':'');render()});
+ es.addEventListener('warn',e=>{const d=JSON.parse(e.data);warns++;{const k=d.dep+'|'+d.ret;failed[k]=1;if(!(k in searched))searched[k]=0}$('stat').innerHTML='<span class="err">'+esc(d.message)+'</span>';$('prog').style.width=(100*d.done/total)+'%'});
+ es.addEventListener('done',e=>{const dd=JSON.parse(e.data||'{}');lastSearchTxt=(ext?'Erweiterung: ':'diese Suche: ')+'<b>'+(dd.api_calls??'?')+'</b> Abfrage'+(dd.api_calls===1?'':'n')+(cachedN?' ('+cachedN+' aus Cache gespart)':'');stop();usage(true);if(!all.length)$('list').innerHTML='<div class="card empty">Keine Angebote gefunden. Filter lockern oder anderen Tag wählen.</div>';$('stat').textContent+=' · fertig';if(flexVal()>searchedFlex)extend()});
+ es.onerror=()=>{if(es&&es.readyState===2)stop()}}
+// Flex nachträglich ändern: enger = nur filtern (keine Abfrage), weiter = nur die neuen Tage nachladen
+function extend(){if(!lastQ||!searchCenter||es)return;const f=flexVal();if(f<=searchedFlex)return;
+ const q=new URLSearchParams(lastQ);q.set('flex',f);q.set('skip',searchedFlex);searchedFlex=f;lastQ.set('flex',f);runScan(q,true)}
+function onFlexChange(){shown=15;if(lastQ&&flexVal()>searchedFlex&&!es)extend();else render()}
+$('go').onclick=()=>{const dest=$('dest').value.trim().toUpperCase(),orig=$('orig').value.trim().toUpperCase();
+ if(!/^[A-Z]{3}$/.test(orig)){$('stat').innerHTML='<span class="err">Bitte einen Abflughafen aus den Vorschlägen wählen (3-Buchstaben-Code, z. B. FRA).</span>';return}
+ if(!/^[A-Z]{3}$/.test(dest)){$('stat').innerHTML='<span class="err">Bitte einen Zielflughafen aus den Vorschlägen wählen (3-Buchstaben-Code, z. B. BKK).</span>';return}
+ if(orig===dest){$('stat').innerHTML='<span class="err">Abflug und Ziel sind identisch.</span>';return}
+ try{localStorage.setItem('orig',orig)}catch(e){}
+ if(!$('depdate').value){$('stat').innerHTML='<span class="err">Bitte einen Abflugtag wählen.</span>';return}
+ if(+$('nmin').value>+$('nmax').value){$('stat').innerHTML='<span class="err">„Nächte von“ ist größer als „bis“.</span>';return}
+ apPending=false;linkCache={};selCombo=new Set();searched={};failed={};all=[];seen=new Set();offAirlines=new Set();airNone=false;airKnown=new Set();offAps=new Set();$('apfilter').dataset.h='';$('apfilter').textContent='Nach der Suche wählbar.';shown=15;$('airlines').dataset.h='';$('airlines').textContent='Nach der Suche wählbar.';$('list').innerHTML='<div class="card empty">Suche läuft … erste Ergebnisse erscheinen gleich.</div>';$('tabs').innerHTML='';$('moreb').style.display='none';
+ starOnly=$('star').checked;curPhase='';searchCenter=$('depdate').value;searchedFlex=flexVal();
+ lastQ=new URLSearchParams({origin:orig,trip:oneWay()?'oneway':'round',dest,dep:searchCenter,flex:searchedFlex,min:oneWay()?0:$('nmin').value,max:oneWay()?0:$('nmax').value,adults:$('adults').value,cabin:$('cabin').value,maxStops:2,bags:$('bags').checked?1:0,star:$('star').checked?1:0,maxCalls:$('depth').value,market:'DE'});
+ cachedN=0;lastSearchTxt='Suche läuft …';usage(true);runScan(lastQ,false)};
+</script>
+</body>
+</html>
